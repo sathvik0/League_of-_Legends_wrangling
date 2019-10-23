@@ -1,0 +1,89 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Oct 22 09:48:13 2019
+
+@author: sathvik.inti
+"""
+
+import os
+import pandas as pd
+import numpy as np
+os.chdir(r'C:\Users\sathvik.inti\Desktop\datatest1')
+bans=pd.read_csv('bans.csv')
+gold=pd.read_csv('gold.csv')
+kills=pd.read_csv('kills.csv')
+matchinfo=pd.read_csv('matchinfo.csv')
+monsters=pd.read_csv('monsters.csv')
+structures=pd.read_csv('structures.csv')
+
+n=['NALCS', 'EULCS','LCK']
+matchinfo=matchinfo[matchinfo['League'].str.contains('|'.join(['NALCS', 'EULCS','LCK']))]
+
+
+kk=pd.value_counts(bans.ban_3)
+#%%
+#@Q1
+dataq1=pd.merge(matchinfo,bans,on='Address',how='left')
+dataq1['temp']=1
+k1=pd.pivot_table(dataq1,index=['Year','Season','League','ban_1'],values='temp',aggfunc='sum').reset_index()
+k2=pd.pivot_table(dataq1,index=['Year','Season','League','ban_2'],values='temp',aggfunc='sum').reset_index()
+k3=pd.pivot_table(dataq1,index=['Year','Season','League','ban_3'],values='temp',aggfunc='sum').reset_index()
+k4=pd.pivot_table(dataq1,index=['Year','Season','League','ban_4'],values='temp',aggfunc='sum').reset_index()
+k5=pd.pivot_table(dataq1,index=['Year','Season','League','ban_5'],values='temp',aggfunc='sum').reset_index()
+
+k6=pd.merge(k1,k2,left_on=['Year','Season','League','ban_1'],right_on=['Year','Season','League','ban_2'],how='outer').fillna(0)
+k6['col1']=[k6['ban_1'][i] if k6['ban_1'][i]!=0 else k6['ban_2'][i] for i in range(len(k6))]
+k6['count1']=k6['temp_x']+k6['temp_y']
+k6=k6[['Year','Season','League','col1','count1']]
+k7=pd.merge(k6,k3,left_on=['Year','Season','League','col1'],right_on=['Year','Season','League','ban_3'],how='outer').fillna(0)
+k7['col2']=[k7['col1'][i] if k7['col1'][i]!=0 else k7['ban_3'][i] for i in range(len(k7))]
+k7['count2']=k7['count1']+k7['temp']
+k7=k7[['Year','Season','League','col2','count2']]
+k8=pd.merge(k7,k4,left_on=['Year','Season','League','col2'],right_on=['Year','Season','League','ban_4'],how='outer').fillna(0)
+k8['col3']=[k8['col2'][i] if k8['col2'][i]!=0 else k8['ban_4'][i] for i in range(len(k8))]
+k8['count3']=k8['count2']+k8['temp']
+k8=k8[['Year','Season','League','col3','count3']]
+k9=pd.merge(k8,k5,left_on=['Year','Season','League','col3'],right_on=['Year','Season','League','ban_5'],how='outer').fillna(0)
+k9['col4']=[k9['col3'][i] if k9['col3'][i]!=0 else k9['ban_5'][i] for i in range(len(k9))]
+k9['count4']=k9['count3']+k9['temp']
+k9=k9[['Year','Season','League','col4','count4']]
+
+k9['Rank'] = k9.groupby(["Year","Season","League"])["count4"].rank("dense", ascending = False)
+k9=k9[k9['Rank']<=5]
+k9['conc']="("+k9['col4'].astype(str)+','+k9['count4'].astype(str)+")"
+k9=k9.drop('col4',axis=1)
+df=k9.groupby(['Year','Season','League'], as_index=False, sort=False).agg(' '.join)
+
+#%%
+#@Q2
+
+dataq1=pd.merge(matchinfo,bans,on='Address',how='left')
+
+dataq2=dataq1[dataq1['redTeamTag'].isin(['TSM','FNC','SKT']) | dataq1['blueTeamTag'].isin(['TSM','FNC','SKT'])]
+dataq2.reset_index(inplace=True,drop=True)
+dataq2['team']=[dataq2['redTeamTag'][i] if (dataq2['redTeamTag'][i] in ['TSM','FNC','SKT']) else dataq2['blueTeamTag'][i] for i in range(len(dataq2))]
+dataq2['opponent']=[dataq2['redTeamTag'][i] if (dataq2['redTeamTag'][i] not in ['TSM','FNC','SKT']) else dataq2['blueTeamTag'][i] for i in range(len(dataq2))]
+
+pd.value_counts(dataq2.team)
+
+
+dataq2['temp']=1
+k1=pd.pivot_table(dataq2,index=['Year','Season','team','ban_1'],values='temp',aggfunc='sum').reset_index()
+k2=pd.pivot_table(dataq2,index=['Year','Season','team','ban_2'],values='temp',aggfunc='sum').reset_index()
+k3=pd.pivot_table(dataq2,index=['Year','Season','team','ban_3'],values='temp',aggfunc='sum').reset_index()
+k4=pd.pivot_table(dataq2,index=['Year','Season','team','ban_4'],values='temp',aggfunc='sum').reset_index()
+k5=pd.pivot_table(dataq2,index=['Year','Season','team','ban_5'],values='temp',aggfunc='sum').reset_index()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
